@@ -1,39 +1,36 @@
-# src/main.py
+"""Command-line entry point for the fashion-agentic-assistant lesson."""
 
-from src.utils.image_io import load_image
+import argparse
+from pathlib import Path
+
 from src.agents.orchestrator import Orchestrator
+from src.config import DEFAULT_IMAGE_PATH, DEFAULT_REQUEST
 from src.generation.response_builder import ResponseBuilder
+from src.utils.image_io import load_image
 
 
-def main():
-    print("Agentic Fashion Color Assistant\n")
-
-    image_path = "data/sample_images/test.jpg"
-    user_text = "I want a smart casual outfit"
-
-    image = load_image(image_path)
-
-    orchestrator = Orchestrator()
-
-    state = orchestrator.run(
-        image,
-        image_path=image_path,
-        user_text=user_text
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run the agentic fashion lesson.")
+    parser.add_argument("--image", type=Path, default=DEFAULT_IMAGE_PATH)
+    parser.add_argument("--request", default=DEFAULT_REQUEST)
+    parser.add_argument(
+        "--show-trace", action="store_true", help="Print each agent decision."
     )
+    return parser.parse_args()
 
-    builder = ResponseBuilder()
-    final_response = builder.build(state)
 
-    print(final_response)
+def main() -> None:
+    args = parse_args()
+    image = load_image(str(args.image))
+    state = Orchestrator().run(image, args.request, image_path=str(args.image))
 
-    caption = state["visual_output"]["caption"]
+    print("Fashion Agentic Assistant\n")
+    print(ResponseBuilder().build(state))
 
-    if caption:
-        print("\nGenerated caption:")
-        print(caption)
-
-    print("\n--- Debug Info ---")
-    print("Revision count:", state["revision_count"])
+    if args.show_trace:
+        print("\nWorkflow trace")
+        for index, event in enumerate(state["trace"], start=1):
+            print(f"{index}. {event}")
 
 
 if __name__ == "__main__":
