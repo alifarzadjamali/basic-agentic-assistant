@@ -1,12 +1,12 @@
 [project]
-name = "afa"
-version = "0.1.0"
-description = "Add your description here"
+name = "fashion-agentic-assistant"
+version = "0.2.0"
+description = "A small, inspectable teaching project for agentic AI workflows."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "einops>=0.8.2",
-    "flake8>=7.3.0",
+    "langchain>=1.2,<2",
     "numpy>=2.4.4",
     "pillow>=12.2.0",
     "scikit-learn>=1.8.0",
@@ -14,3 +14,22 @@ dependencies = [
     "torch>=2.2",
     "transformers==4.49.0",
 ]
+
+[project.scripts]
+fashion-assistant = "src.main:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.9",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
