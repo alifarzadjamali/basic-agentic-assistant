@@ -1,31 +1,20 @@
-# src/utils/captioning.py
+"""Optional image captioning.
 
-from PIL import Image
-import torch
-
-from transformers import (
-    AutoProcessor,
-    AutoModelForCausalLM
-)
+The heavyweight model is imported only when the workflow chooses this branch.
+That keeps the default lesson fast and runnable without a model download.
+"""
 
 MODEL_ID = "microsoft/Florence-2-base"
 
-processor = AutoProcessor.from_pretrained(
-    MODEL_ID,
-    trust_remote_code=True
-)
-
-model = AutoModelForCausalLM.from_pretrained(
-    MODEL_ID,
-    trust_remote_code=True
-)
-
-# ---- FIX ----
-if not hasattr(model.config, "forced_bos_token_id"):
-    model.config.forced_bos_token_id = None
-
 
 def generate_caption(image_path: str) -> str:
+    import torch
+    from PIL import Image
+    from transformers import AutoModelForCausalLM, AutoProcessor
+
+    processor = AutoProcessor.from_pretrained(MODEL_ID, trust_remote_code=True)
+    model = AutoModelForCausalLM.from_pretrained(MODEL_ID, trust_remote_code=True)
+
     image = Image.open(image_path).convert("RGB")
 
     prompt = "<CAPTION>"
