@@ -1,6 +1,7 @@
-
-def find_best_match(detected_colors, rules):
-    # naive approach: pick first detected color
+def find_best_match(
+    detected_colors: list[str], rules: dict[str, dict[str, object]]
+) -> dict[str, object]:
+    """Retrieve the rule associated with the most prominent named colour."""
     base_color = detected_colors[0].lower()
 
     if base_color in rules:
@@ -13,5 +14,5 @@ def find_best_match(detected_colors, rules):
     return {
         "base_color": base_color,
         "matches": [],
-        "style": "No rule found for this color."
+        "style": "No matching rule was found in the bundled rule set.",
     }
