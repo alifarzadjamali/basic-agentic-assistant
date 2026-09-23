@@ -1,94 +1,44 @@
-# Agentic Fashion Color Assistant Architecture
+# Architecture
 
-## Overview
+The application uses a small stateful workflow. Each agent consumes a typed
+record and returns another typed record; no agent mutates hidden global state.
 
-This project demonstrates a small agentic AI system for fashion color recommendation.
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant V as Visual agent
+    participant K as Knowledge agent
+    participant C as Critic agent
+    participant B as Response builder
 
-The system combines:
-- visual understanding,
-- decision-based routing,
-- external fashion knowledge,
-- grounded recommendations,
-- and critic-based revision loops.
+    U->>V: image + request
+    V->>K: VisualAnalysis
+    K->>C: KnowledgeAnalysis + provenance
+    alt evidence is sufficient
+        C->>B: CriticAssessment
+    else evidence is weak
+        C->>K: request local-rule retrieval
+        K->>C: revised KnowledgeAnalysis
+        C->>B: CriticAssessment
+    end
+    B->>U: labelled recommendation
+```
 
----
+## The decisions
 
-# Agent Flow
+| Agent | Decision | Current policy | Easy extension |
+| --- | --- | --- | --- |
+| Visual | Is captioning needed? | Low colour confidence or image quality | Add object detection |
+| Knowledge | Use a local rule? | Complex request or uncertain image | Add semantic retrieval |
+| Critic | Revise? | Weak grounding or too few matches | Add a rubric or evaluator |
 
-User Image + Text
-        ↓
-Visual Agent
-        ↓
-Decision:
-Need captioning?
-        ↓
-Florence-2 Captioning (optional)
-        ↓
-Knowledge Agent
-        ↓
-Decision:
-Need external grounding?
-        ↓
-Fashion Rules Retrieval
-        ↓
-Critic Agent
-        ↓
-Decision:
-Need revision?
-        ↓
-Loop / Retry
-        ↓
-Grounded Response Builder
+The LangChain pipeline only connects the initial three stages. The revision loop
+is explicit Python because it is the part learners need to reason about first.
 
----
+```text
+Runnable sequence: Visual → Knowledge → Critic
+Explicit control flow: Critic decision → optional Knowledge retry
+```
 
-# Agents
-
-## Visual Agent
-Responsible for:
-- extracting dominant colors,
-- evaluating image quality,
-- deciding whether captioning is needed.
-
-### Decision Variables
-- image_quality
-- color_confidence
-- needs_caption
-
----
-
-## Knowledge Agent
-Responsible for:
-- retrieving fashion rules,
-- deciding whether external grounding is required.
-
-### Decision Variables
-- request_complexity
-- retrieval_confidence
-- used_external
-
----
-
-## Critic Agent
-Responsible for:
-- evaluating response grounding,
-- checking completeness,
-- triggering revision loops.
-
-### Decision Variables
-- grounding_score
-- completeness_score
-- needs_revision
-
----
-
-# Key Concepts
-
-## Agentic Behavior
-The system dynamically changes execution flow based on decision variables instead of following one rigid pipeline.
-
-## Grounded Recommendations
-Recommendations are tied to external fashion rules to reduce unsupported outputs.
-
-## Critic Loop
-Weak outputs trigger another reasoning iteration.
+This separation is intentional: framework syntax should make the workflow easier
+to inspect, not obscure the policy being taught.

@@ -1,98 +1,116 @@
-# Agentic Fashion Color Assistant
+# Fashion Agentic Assistant
 
-A small multi-agent AI system for grounded fashion color recommendation.
+A small, runnable class on agentic AI. It analyses the dominant colours in an
+outfit image, retrieves a local fashion rule, lets a critic inspect the evidence,
+and produces a recommendation with its provenance visible.
 
-This project demonstrates:
-- agentic AI workflows,
-- decision-based routing,
-- multimodal reasoning,
-- evidence-grounded recommendations,
-- and critic-based revision loops.
+It is designed for newcomers: the workflow is useful, but it does not pretend to
+be autonomous or to use an LLM where a deterministic rule is clearer.
 
----
-
-# Features
-
-## Visual Understanding
-- dominant color extraction
-- image quality estimation
-- caption routing decisions
-
-## Captioning
-- Florence-2 image caption generation
-
-## Knowledge Grounding
-- local fashion rule retrieval
-- evidence-aware recommendation generation
-
-## Critic Agent
-- evaluates grounding quality
-- triggers revision loops
-
-## Orchestration
-- coordinates all agents dynamically
-
----
-
-# Architecture
-
-See:
-
-```bash
-ARCHITECTURE.md
+```mermaid
+flowchart LR
+    I[Image + request] --> V[Visual agent]
+    V -->|palette, quality| K[Knowledge agent]
+    K -->|local rule or fallback| C[Critic agent]
+    C -->|enough evidence| R[Response]
+    C -->|missing evidence| K
 ```
 
----
+## What you will learn
 
-# Example Workflow
+| Concept | Where to see it |
+| --- | --- |
+| State passed between agents | `src/schemas.py` |
+| Routing decision | `VisualAgent` and `KnowledgeAgent` |
+| Tool use | Optional Florence-2 captioning |
+| Grounding | `data/fashion_rules.json` |
+| Critic/revision loop | `src/agents/orchestrator.py` |
+| Framework composition | LangChain `RunnableLambda` pipeline |
 
-1. User uploads clothing image
-2. Visual agent analyzes image
-3. System decides whether captioning is needed
-4. Knowledge agent retrieves matching fashion rules
-5. Critic evaluates recommendation quality
-6. Response builder generates grounded recommendation
+## Quick start
 
----
-
-# Tech Stack
-
-- Python
-- uv
-- Pillow
-- scikit-learn
-- Transformers
-- Florence-2
-- NumPy
-
----
-
-# Run
+Requires Python 3.12 and [uv](https://docs.astral.sh/uv/).
 
 ```bash
-python -m src.main
+uv sync --all-groups
+uv run fashion-assistant --show-trace
 ```
 
----
+Try another image or request:
 
-# Project Structure
+```bash
+uv run fashion-assistant \
+  --image data/sample_images/test2.jpg \
+  --request "Suggest colours for a relaxed weekend outfit" \
+  --show-trace
+```
+
+The default route is deterministic and does not call an API or download a model.
+Captioning is a deliberately optional branch. On a low-quality image it loads
+Florence-2 from Hugging Face the first time it is needed; this needs network
+access, model-cache space, and the dependencies already locked in `uv.lock`.
+
+## Read the workflow
+
+```text
+Workflow state
+├── VisualAnalysis      palette, image quality, caption decision
+├── KnowledgeAnalysis   colour rule, matches, evidence label
+└── CriticAssessment    completeness, grounding, revision decision
+```
+
+LangChain is used for composition, not as a black box:
+
+```python
+RunnableLambda(self._run_visual) | RunnableLambda(self._run_knowledge) | RunnableLambda(self._run_critic)
+```
+
+Each runnable calls ordinary, typed Python. Start with
+[`src/agents/orchestrator.py`](src/agents/orchestrator.py), then follow the trace
+printed by `--show-trace`.
+
+## Project layout
 
 ```text
 src/
-├── agents/
-├── generation/
-├── knowledge/
-├── utils/
+├── agents/        # visual, knowledge, critic, and orchestration
+├── generation/    # evidence-labelled response
+├── knowledge/     # local rule loading and matching
+├── utils/         # image, colour, and optional caption utilities
+├── schemas.py     # records shared by agents
+└── main.py        # CLI
+data/
+└── fashion_rules.json
+docs/
+└── lesson-01-workflow.md
 ```
 
----
+## Reproducibility and checks
 
-# Future Improvements
+`uv.lock` pins the resolved environment. Run the complete local check before
+changing behaviour:
 
-- CLIP embeddings
-- vector database retrieval
-- FastAPI backend
-- Streamlit UI
-- explanation faithfulness metrics
-- RAG-based grounding
-- multi-item outfit compatibility
+```bash
+uv run ruff check .
+uv run pytest
+```
+
+The colour-clustering random seed is fixed. Results can still vary slightly
+between supported numeric-library platforms, so tests assert behaviour and
+invariants rather than exact cluster-centre values.
+
+## Boundaries and honest limitations
+
+- The fashion rules are bundled project data, not live or expert-verified advice.
+- “Grounding” means a recommendation names its local rule source; it is not a
+  guarantee that the advice is correct for every context.
+- The critic checks structured evidence. It does not evaluate factual truth or
+  write a new answer.
+- This starter workflow has no remote LLM, API key, vector database, or hidden
+  agent memory.
+
+## Continue learning
+
+Work through [Lesson 1: inspect and extend a workflow](docs/lesson-01-workflow.md).
+Good next experiments are adding a rule, changing a routing threshold, writing a
+test for it, and only then swapping a deterministic component for an LLM.

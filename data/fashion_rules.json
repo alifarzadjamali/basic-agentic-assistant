@@ -14,5 +14,21 @@
   "brown": {
     "matches": ["beige", "white", "blue", "green"],
     "style": "Brown works well with earthy and soft tones."
+  },
+  "beige": {
+    "matches": ["white", "brown", "blue", "green"],
+    "style": "Beige is a calm neutral that works well with earthy colours and blue accents."
+  },
+  "grey": {
+    "matches": ["white", "black", "blue", "red"],
+    "style": "Grey provides a quiet base for both neutral and accent colours."
+  },
+  "green": {
+    "matches": ["beige", "white", "brown", "grey"],
+    "style": "Green pairs naturally with neutrals and other earthy tones."
+  },
+  "red": {
+    "matches": ["black", "white", "grey", "beige"],
+    "style": "Red is strongest when balanced by restrained neutral colours."
   }
 }

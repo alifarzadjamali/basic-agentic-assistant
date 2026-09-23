@@ -19,11 +19,12 @@ class CriticAgent:
         grounding = self._check_grounding(used_rules, retrieval_confidence)
         needs_revision = self._decide_revision(completeness, grounding)
 
-        feedback = (
-            "Retrieve a local rule before answering."
-            if not used_rules
-            else "The recommendation has enough local evidence."
-        )
+        if not used_rules:
+            feedback = "Retrieve a local rule before answering."
+        elif needs_revision:
+            feedback = "The retrieved rule is incomplete; revise or report the limitation."
+        else:
+            feedback = "The recommendation has enough local evidence."
         return CriticAssessment(
             completeness_score=completeness,
             grounding_score=grounding,
